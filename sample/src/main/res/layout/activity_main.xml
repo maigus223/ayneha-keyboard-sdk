@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ayneha_night"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="AYNEHA Keyboard SDK"
+            android:textColor="@color/ayneha_ochre"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Mode 1 : widget clavier in-app -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1. Saisie directe — widget in-app"
+            android:textColor="@color/ayneha_text"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/editDirect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ak_key_bg"
+            android:padding="12dp"
+            android:textColor="@color/ayneha_text"
+            android:textColorHint="@color/ayneha_text_muted"
+            android:hint="Touchez le clavier ci-dessous"
+            android:inputType="none"
+            android:layout_marginBottom="8dp" />
+
+        <com.maigus.ayneha.sdk.AynehaKeyboardView
+            android:id="@+id/aynehaKeyboard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="28dp" />
+
+        <!-- Mode 2 : translittération automatique -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2. Translittération automatique — clavier latin standard"
+            android:textColor="@color/ayneha_text"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/editTranslit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ak_key_bg"
+            android:padding="12dp"
+            android:textColor="@color/ayneha_text"
+            android:textColorHint="@color/ayneha_text_muted"
+            android:hint="Tapez en latin, ex. « bismala »"
+            android:inputType="text"
+            android:layout_marginBottom="28dp" />
+
+        <!-- Mode 3 : clavier système -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3. Clavier système AYNEHA"
+            android:textColor="@color/ayneha_text"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnEnableSystemKeyboard"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Activer dans les paramètres Android"
+            android:textAllCaps="false" />
+
+    </LinearLayout>
+</ScrollView>

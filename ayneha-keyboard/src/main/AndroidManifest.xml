@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+
+        <!--
+          Service de clavier système (IME). Il est déclaré ici dans la
+          bibliothèque, mais reste inactif tant que l'utilisateur ne
+          l'active pas explicitement dans les paramètres Android
+          (Paramètres > Langues et saisie > Claviers). L'application hôte
+          n'a rien à déclarer de plus pour l'utiliser ; elle peut aussi
+          l'ignorer complètement et se contenter du widget in-app
+          AynehaKeyboardView.
+        -->
+        <service
+            android:name="com.maigus.ayneha.sdk.ime.AynehaInputMethodService"
+            android:label="@string/ayneha_ime_label"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
+
+    </application>
+
+</manifest>

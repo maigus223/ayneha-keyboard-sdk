@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AynehaSample" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@color/ayneha_night</item>
+        <item name="android:windowBackground">@color/ayneha_night</item>
+        <item name="colorPrimary">@color/ayneha_ochre</item>
+        <item name="colorAccent">@color/ayneha_river</item>
+    </style>
+</resources>

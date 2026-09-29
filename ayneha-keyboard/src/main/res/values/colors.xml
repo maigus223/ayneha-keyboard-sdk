@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Charte graphique AYNEHA par défaut — surchargeable par l'application hôte
+         en redéfinissant ces mêmes noms de couleur dans son propre colors.xml. -->
+    <color name="ayneha_night">#171335</color>
+    <color name="ayneha_night_2">#1F1A45</color>
+    <color name="ayneha_dune">#272052</color>
+    <color name="ayneha_dune_2">#302962</color>
+    <color name="ayneha_border">#423876</color>
+    <color name="ayneha_sand">#F1E4C8</color>
+    <color name="ayneha_ochre">#E3A857</color>
+    <color name="ayneha_ochre_dim">#A97A38</color>
+    <color name="ayneha_river">#3FA79A</color>
+    <color name="ayneha_clay">#C1502E</color>
+    <color name="ayneha_text">#F1E4C8</color>
+    <color name="ayneha_text_muted">#9C93C4</color>
+</resources>

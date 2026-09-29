@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="AynehaKeyboardView">
+        <attr name="ak_keyBackgroundColor" format="color" />
+        <attr name="ak_keyTextColor" format="color" />
+        <attr name="ak_accentColor" format="color" />
+        <attr name="ak_backgroundColor" format="color" />
+        <attr name="ak_startInTransliterationMode" format="boolean" />
+        <attr name="ak_showDigitRow" format="boolean" />
+    </declare-styleable>
+</resources>
