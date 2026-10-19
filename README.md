@@ -54,7 +54,16 @@ sur un dépôt Maven privé ou JitPack.)
 findViewById<AynehaKeyboardView>(R.id.aynehaKeyboard).attachTo(monEditText)
 ```
 
-Chaque touche insère directement le glyphe AYNEHA correspondant. L'attribut
+Chaque touche insère directement le glyphe AYNEHA correspondant, en **RTL pur
+(lettres et chiffres)** : chaque glyphe est enveloppé en RLO + glyphe + PDF
+(U+202E ... U+202C, voir `AynehaRtl`), de sorte que le texte grandit de droite
+à gauche et qu'une pression sur Effacer retire le dernier glyphe tapé en entier
+(4 unités UTF-16 pour un glyphe du plan 16). `attachTo(editText)` prépare aussi
+le champ (direction RTL + police `ayneha_pro`, via `AynehaKeyboard.prepareField`) ;
+passer `prepare = false` pour garder la mise en forme du champ. Si votre
+application lit le texte saisi, sachez qu'il contient ces marqueurs RLO/PDF
+invisibles autour de chaque glyphe (à ignorer ou retirer avant un export en
+texte brut). L'attribut
 `ak_startInTransliterationMode` (ou `setShowLatinLabels(true)`) affiche des
 étiquettes latines d'aide sur les touches pour les utilisateurs pas encore
 familiers du script — **le caractère inséré reste toujours l'AYNEHA natif**,
@@ -90,15 +99,37 @@ doit valider manuellement l'activation dans les paramètres.
 ## Mapping officiel des glyphes
 
 `AynehaCodepoints` expose l'intégralité des 98 glyphes de la Matrice
-Officielle de l'Alphabet AYNEHA (zone privée Unicode U+E000–U+E061) :
+Officielle de l'Alphabet AYNEHA (bloc réservé du plan 16, Unicode PUA-B,
+U+10FF7C-U+10FFDD) :
 
-- `DIGITS` / `digit(0..9)` — chiffres, U+E000–U+E009
-- `CONSONANTS` — 22 consonnes de base, U+E00A–U+E01F
-- `VOWELS` — 5 voyelles de base, U+E020–U+E024
-- `COMBINATIONS` — 50 combinaisons lettre + accent (Double, Nasalisé, Muet,
-  Ouvert), U+E025–U+E056
-- `ACCENT_*`, `VIRGULE`, `POINT_VIRGULE` — accents isolés et ponctuation,
-  U+E057–U+E061
+- `DIGITS` / `digit(0..9)` - chiffres, U+10FF7C-U+10FF85
+- `CONSONANTS` - 22 consonnes de base, U+10FF86-U+10FF9B
+- `VOWELS` - 5 voyelles de base, U+10FF9C-U+10FFA0
+- `COMBINATIONS` - 50 combinaisons lettre + accent (Double, Nasalisé, Muet,
+  Ouvert), U+10FFA1-U+10FFD2
+- `ACCENT_*`, `VIRGULE`, `POINT_VIRGULE` - accents isolés et ponctuation,
+  U+10FFD3-U+10FFDD
+- `PUA_START` / `PUA_END` et `isAynehaCodepoint(codePoint: Int)` ; l'ancienne
+  plage U+E000-U+E061 reste connue via `LEGACY_PUA_START` / `LEGACY_PUA_END`
+  et `isLegacyAynehaCodepoint(codePoint: Int)`.
+
+### Migration depuis la version 1.0.0 (changements d'API)
+
+Depuis la version **1.1.0**, les glyphes AYNEHA sont au-delà du plan de base :
+chacun occupe **2 unités UTF-16** (paire de substitution) et ne tient plus
+dans un `Char`.
+
+- Toutes les valeurs de `AynehaCodepoints` sont maintenant des `String`
+  (un glyphe) au lieu de `Char` ; `digit(d)` renvoie un `String`.
+- `AynehaKey.char: Char` devient `AynehaKey.glyph: String`.
+- `AynehaKeyboardView.onCharInserted` reçoit un `String` (le glyphe inséré).
+- `isAynehaCodepoint` prend un codepoint (`Int`), plus un `Char`.
+- Règle pour le code de l'application hôte : ne jamais supposer qu'un glyphe
+  vaut un `Char`. Éviter `length`, `[i]`, `substring`, `reversed()` sur du
+  texte AYNEHA ; utiliser `codePointCount`, `offsetByCodePoints`,
+  `StringBuilder.reverse()` (qui préserve les paires), `Character.toChars`.
+- Les textes déjà saisis avec l'ancienne plage restent affichables : la police
+  fournie (`ayneha_pro.ttf`, v3.0, transition) contient les deux plages.
 
 ## Personnalisation visuelle
 
@@ -123,6 +154,7 @@ AynehaKeyboardSDK/
 │       ├── AndroidManifest.xml       ← déclare le service IME (optionnel à l'usage)
 │       ├── java/.../sdk/
 │       │   ├── AynehaCodepoints.kt   ← mapping officiel des 98 glyphes
+│       │   ├── AynehaRtl.kt          ← RTL pur : enveloppe RLO/PDF et effacement
 │       │   ├── KeyboardLayouts.kt    ← disposition des touches (partagée widget/IME)
 │       │   ├── AynehaKeyboardView.kt ← widget in-app
 │       │   ├── AynehaTextTarget.kt   ← abstraction EditText / InputConnection
@@ -131,7 +163,7 @@ AynehaKeyboardSDK/
 │       │   ├── AynehaKeyboard.kt     ← façade publique du SDK
 │       │   └── ime/AynehaInputMethodService.kt ← clavier système
 │       └── res/
-│           ├── font/ayneha_regular.ttf
+│           ├── font/ayneha_pro.ttf
 │           ├── values/{colors,attrs,strings}.xml
 │           ├── drawable/ak_key_*.xml
 │           └── xml/method.xml        ← descripteur requis par le framework IME
@@ -180,6 +212,29 @@ digramme dédié (ex. `n`+labiale).
 Ces 6 tests ont été vérifiés par compilation et exécution réelle (JVM,
 Kotlin 1.9.24) avant livraison.
 
+## Voyelles ouvertes à saisie directe (version 1.2.0)
+
+Le `è` (e accent grave) est une voyelle **E ouvert**, comme le `ɛ` ; le `ô` (o
+accent circonflexe) est une voyelle **O ouvert**, comme le `ɔ`. Ils produisent
+donc les glyphes E+Ouvert et O+Ouvert (`COMBINATIONS`) :
+
+| Saisie | Résultat |
+|---|---|
+| `è` ou `ɛ` | E+Ouvert |
+| `ô` ou `ɔ` | O+Ouvert |
+| `bè` | B puis E+Ouvert |
+| `kô` | K puis O+Ouvert |
+
+Les majuscules (`È`, `Ô`) et les formes décomposées (e + accent combinant) sont
+reconnues aussi (normalisation Unicode NFC avant la translittération). Un `è` ou
+`ô` compte comme une voyelle pour les règles de digrammes (`nyè`, `gnô`, `diè`).
+
+## Ordre des touches
+
+Le clavier suit l'ordre alphabétique AYNEHA : d'abord les 5 voyelles (A E I O U),
+puis les 22 consonnes, dans l'ordre de la Matrice Officielle, réparties en
+rangées 10-10-7 (première touche de chaque rangée à l'extrême droite).
+
 ## Limites connues / pistes d'évolution
 
 - La tonologie (Ton Haut / Ton Bas / tons flottants) n'est pas représentée :
@@ -207,7 +262,7 @@ Kotlin 1.9.24) avant livraison.
 - **Code du SDK** (`ayneha-keyboard`, `sample`) : **GNU LGPL v3.0** — voir [`LICENSE`](LICENSE) (texte complet de la GPLv3) et [`COPYING.LESSER`](COPYING.LESSER) (permissions additionnelles de la LGPL, comme recommandé par la Free Software Foundation).
   - Toute modification du SDK lui-même doit rester publiée sous la même licence.
   - Une application tierce qui **intègre** ce SDK (même fermée ou commerciale) n'est **pas obligée** d'être open source, contrairement à la GPL stricte — c'est le but de la LGPL pour une bibliothèque destinée à être réutilisée.
-- **Police AYNEHA (Ayneha Type)** : SIL Open Font License 1.1 — voir [`OFL.txt`](OFL.txt). Le fichier de police doit toujours être accompagné de cette licence lors de toute redistribution.
+- **Police AYNEHA (Ayneha Pro, v3.0)** : SIL Open Font License 1.1 — voir [`OFL.txt`](OFL.txt). Le fichier de police doit toujours être accompagné de cette licence lors de toute redistribution.
 - **Nom « AYNEHA », logos et identité visuelle** : non couverts par la LGPL ; contacter l'auteur avant tout usage commercial ou en tant que marque.
 
 *Code: GNU LGPL v3.0 (see LICENSE + COPYING.LESSER). Font: SIL OFL 1.1 (see OFL.txt). The AYNEHA name, logos and visual identity are not covered by the LGPL.*

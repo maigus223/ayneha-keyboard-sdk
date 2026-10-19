@@ -30,7 +30,10 @@ class EditTextTarget(private val editText: EditText) : AynehaTextTarget {
         if (start != end) {
             editText.text.delete(minOf(start, end), maxOf(start, end))
         } else if (start > 0) {
-            editText.text.delete(start - 1, start)
+            // Un glyphe AYNEHA saisi est stocké RLO + glyphe (2 unités UTF-16) + PDF : une seule
+            // pression efface l'enveloppe entière (voir [AynehaRtl]).
+            val before = editText.text.subSequence(maxOf(0, start - AynehaRtl.MAX_WRAPPER_UNITS), start)
+            editText.text.delete(start - AynehaRtl.backspaceLength(before), start)
         }
     }
 
@@ -51,7 +54,9 @@ class InputConnectionTarget(private val provider: () -> InputConnection?) : Ayne
         if (!selected.isNullOrEmpty()) {
             ic.commitText("", 1)
         } else {
-            ic.deleteSurroundingText(1, 0)
+            // Enveloppe RLO + glyphe + PDF : une seule pression efface le glyphe entier (voir [AynehaRtl]).
+            val before = ic.getTextBeforeCursor(AynehaRtl.MAX_WRAPPER_UNITS, 0) ?: ""
+            ic.deleteSurroundingText(AynehaRtl.backspaceLength(before), 0)
         }
     }
 

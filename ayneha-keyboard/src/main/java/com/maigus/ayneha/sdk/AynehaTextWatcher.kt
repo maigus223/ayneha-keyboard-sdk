@@ -58,14 +58,21 @@ class AynehaTextWatcher(private val target: EditText) : TextWatcher {
         val displayed = s.toString()
         if (displayed == previousDisplayed) return
 
-        val prefixLen = commonPrefixLength(previousDisplayed, displayed)
-        val suffixLen = commonSuffixLength(previousDisplayed, displayed, prefixLen)
-        val removedCount = (previousDisplayed.length - prefixLen - suffixLen).coerceAtLeast(0)
+        // Les glyphes AYNEHA (plan 16) sont des paires de substitution : le préfixe/suffixe
+        // commun est ajusté pour ne jamais couper une paire en deux, et les suppressions sont
+        // comptées en codepoints (un glyphe = 1), pas en unités UTF-16 (un glyphe = 2).
+        var prefixLen = commonPrefixLength(previousDisplayed, displayed)
+        if (prefixLen > 0 && Character.isHighSurrogate(previousDisplayed[prefixLen - 1])) prefixLen--
+        var suffixLen = commonSuffixLength(previousDisplayed, displayed, prefixLen)
+        if (suffixLen > 0 && Character.isLowSurrogate(previousDisplayed[previousDisplayed.length - suffixLen])) suffixLen--
+        val removedEnd = (previousDisplayed.length - suffixLen).coerceAtLeast(prefixLen)
+        val removedCount = previousDisplayed.codePointCount(prefixLen, removedEnd)
         val inserted = displayed.substring(prefixLen, displayed.length - suffixLen)
 
         if (removedCount > 0) {
-            val toRemove = removedCount.coerceAtMost(rawBuffer.length)
-            rawBuffer.delete(rawBuffer.length - toRemove, rawBuffer.length)
+            val rawCount = rawBuffer.codePointCount(0, rawBuffer.length)
+            val toRemove = removedCount.coerceAtMost(rawCount)
+            rawBuffer.setLength(rawBuffer.offsetByCodePoints(rawBuffer.length, -toRemove))
         }
         if (inserted.isNotEmpty()) {
             rawBuffer.append(inserted)
@@ -76,9 +83,13 @@ class AynehaTextWatcher(private val target: EditText) : TextWatcher {
         if (converted == displayed) return
 
         selfEdit = true
-        val cursor = target.selectionEnd
+        val cursor = target.selectionEnd.coerceIn(0, displayed.length)
         s.replace(0, s.length, converted)
-        target.setSelection(cursor.coerceIn(0, converted.length))
+        // Curseur recalculé en codepoints : une position en unités UTF-16 pourrait tomber au
+        // milieu d'une paire de substitution.
+        val cursorCp = displayed.codePointCount(0, cursor)
+        val newCursor = converted.offsetByCodePoints(0, cursorCp.coerceAtMost(converted.codePointCount(0, converted.length)))
+        target.setSelection(newCursor)
         selfEdit = false
     }
 

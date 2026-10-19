@@ -10,7 +10,7 @@ package com.maigus.ayneha.sdk
  * 1. Consonnes simples
  * 2. Digraphes et trigraphe consonantiques (avec priorité et conditions)
  * 3. Voyelles simples
- * 4. Voyelles ouvertes (saisie directe)
+ * 4. Voyelles ouvertes (saisie directe : ɛ ou è pour E ouvert, ɔ ou ô pour O ouvert)
  * 5. Voyelles nasalisées (saisie directe + construction voyelle+"n")
  * 6. Gémination (redoublement)
  * 7. Consonnes muettes
@@ -54,7 +54,7 @@ object AynehaTransliterator {
     private const val SIMPLE_VOWELS = "aeiou"
 
     /** Caractères comptant comme "voyelle" pour les conditions de digraphes/nasalisation. */
-    private const val VOWEL_LOOKAHEAD_CHARS = "aeiouɛɔãẽĩõũ"
+    private const val VOWEL_LOOKAHEAD_CHARS = "aeiouɛɔèôãẽĩõũ"
 
     private val DIRECT_NASAL_VOWELS: Map<Char, String> = mapOf(
         'ã' to "A", 'ẽ' to "E", 'ĩ' to "I", 'õ' to "O", 'ũ' to "U"
@@ -163,9 +163,10 @@ object AynehaTransliterator {
                 continue
             }
 
-            // Règle 4 — voyelles ouvertes à saisie directe : ɛ, ɔ (doublée -> repli sur la forme simple, sans glyphe dédié)
-            if (c == 'ɛ' || c == 'ɔ') {
-                val key = if (c == 'ɛ') "E" else "O"
+            // Règle 4 — voyelles ouvertes à saisie directe : ɛ ou è (E ouvert), ɔ ou ô (O ouvert)
+            // (doublée -> repli sur la forme simple, sans glyphe dédié)
+            if (c == 'ɛ' || c == 'è' || c == 'ɔ' || c == 'ô') {
+                val key = if (c == 'ɛ' || c == 'è') "E" else "O"
                 var len = 1
                 if (i + 1 < n && lower[i + 1] == c) len = 2
                 tokens += Token(key, Category.VOWEL, AynehaCodepoints.Accent.OUVERT)
@@ -252,9 +253,9 @@ object AynehaTransliterator {
     // Règle 8 — résolution du codepoint final
     // ------------------------------------------------------------------
 
-    private fun resolveToken(t: Token): Char? {
+    private fun resolveToken(t: Token): String? {
         return when (t.category) {
-            Category.OTHER -> t.key.firstOrNull()
+            Category.OTHER -> t.key.ifEmpty { null }
             Category.VOWEL -> when (t.accent) {
                 AynehaCodepoints.Accent.DOUBLE ->
                     AynehaCodepoints.COMBINATIONS[t.key to AynehaCodepoints.Accent.DOUBLE] ?: AynehaCodepoints.VOWELS[t.key]
@@ -334,7 +335,10 @@ object AynehaTransliterator {
      * transcription (règle 11).
      */
     fun transliterate(text: String): String {
-        val paragraphs = text.split("\n")
+        // Normalisation NFC : "e" + accent combinant (U+0300) devient "è", "o" + U+0302 devient "ô",
+        // pour que les saisies décomposées (certains claviers/copier-coller) soient reconnues.
+        val normalized = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFC)
+        val paragraphs = normalized.split("\n")
         val transformed = paragraphs.map { paragraph ->
             paragraph.split(" ").joinToString(" ") { block -> transliterateBlock(block) }
         }

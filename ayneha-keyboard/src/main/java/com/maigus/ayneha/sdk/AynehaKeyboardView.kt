@@ -44,8 +44,8 @@ class AynehaKeyboardView @JvmOverloads constructor(
     private val accentColor: Int
     private val allKeyButtons = mutableListOf<Pair<Button, AynehaKey>>()
 
-    /** Écouteur facultatif notifié à chaque caractère inséré (utile pour analytics/validation). */
-    var onCharInserted: ((Char) -> Unit)? = null
+    /** Écouteur facultatif notifié à chaque glyphe inséré (String d'un codepoint, 2 unités UTF-16) (utile pour analytics/validation). */
+    var onCharInserted: ((String) -> Unit)? = null
 
     init {
         orientation = VERTICAL
@@ -61,13 +61,16 @@ class AynehaKeyboardView @JvmOverloads constructor(
         a.recycle()
         setBackgroundColor(bg)
 
-        aynehaFont = ResourcesCompat.getFont(context, R.font.ayneha_type) ?: Typeface.DEFAULT
+        aynehaFont = ResourcesCompat.getFont(context, R.font.ayneha_pro) ?: Typeface.DEFAULT
 
         buildRows()
     }
 
-    /** Relie ce clavier à un champ de saisie standard de l'application hôte. */
-    fun attachTo(editText: android.widget.EditText) {
+    /** Relie ce clavier à un champ de saisie standard de l'application hôte. Par défaut le champ est
+     * préparé pour AYNEHA (direction RTL + police AYNEHA, voir [AynehaKeyboard.prepareField]) ;
+     * passer `prepare = false` pour garder la mise en forme du champ telle quelle. */
+    fun attachTo(editText: android.widget.EditText, prepare: Boolean = true) {
+        if (prepare) AynehaKeyboard.prepareField(editText)
         target = EditTextTarget(editText)
     }
 
@@ -89,7 +92,7 @@ class AynehaKeyboardView @JvmOverloads constructor(
             button.textSize = 14f
         } else {
             button.typeface = aynehaFont
-            button.text = key.char.toString()
+            button.text = key.glyph
             button.textSize = 20f
         }
     }
@@ -132,8 +135,9 @@ class AynehaKeyboardView @JvmOverloads constructor(
             applyKeyLabel(btn, key)
             allKeyButtons.add(btn to key)
             btn.setOnClickListener {
-                target?.commitText(key.char.toString())
-                onCharInserted?.invoke(key.char)
+                // RTL pur (lettres et chiffres) : le glyphe est enveloppé RLO...PDF, voir [AynehaRtl].
+                target?.commitText(AynehaRtl.wrap(key.glyph))
+                onCharInserted?.invoke(key.glyph)
             }
             row.addView(btn)
         }

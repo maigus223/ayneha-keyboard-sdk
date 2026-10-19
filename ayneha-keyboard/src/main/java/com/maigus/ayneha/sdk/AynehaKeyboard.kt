@@ -3,8 +3,10 @@ package com.maigus.ayneha.sdk
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import androidx.core.content.res.ResourcesCompat
 
 /**
  * Point d'entrée simple du SDK AYNEHA Keyboard. Regroupe les deux modes
@@ -23,7 +25,7 @@ import android.widget.EditText
 object AynehaKeyboard {
 
     /** Version du SDK, à des fins de diagnostic/rapport de bug. */
-    const val VERSION = "1.0.0"
+    const val VERSION = "1.2.0"
 
     /**
      * Active la translittération automatique latin → AYNEHA en temps réel
@@ -32,7 +34,8 @@ object AynehaKeyboard {
      * AYNEHA). Retourne le [AynehaTextWatcher] posé, à retirer via
      * `editText.removeTextChangedListener(...)` si besoin.
      */
-    fun enableTransliteration(editText: EditText): AynehaTextWatcher {
+    fun enableTransliteration(editText: EditText, prepare: Boolean = true): AynehaTextWatcher {
+        if (prepare) prepareField(editText)
         val watcher = AynehaTextWatcher(editText)
         editText.addTextChangedListener(watcher)
         return watcher
@@ -44,6 +47,16 @@ object AynehaKeyboard {
      * le détail des règles appliquées.
      */
     fun transliterate(latin: String): String = AynehaTransliterator.transliterate(latin)
+
+    /**
+     * Prépare un champ pour afficher AYNEHA en RTL pur (lettres et chiffres) : direction de
+     * mise en page RTL (le texte s'aligne à droite et grandit vers la gauche) et police AYNEHA.
+     * Appelé automatiquement par [AynehaKeyboardView.attachTo] et [enableTransliteration].
+     */
+    fun prepareField(editText: EditText) {
+        editText.layoutDirection = View.LAYOUT_DIRECTION_RTL
+        ResourcesCompat.getFont(editText.context, R.font.ayneha_pro)?.let { editText.typeface = it }
+    }
 
     /** Un [AynehaTextTarget] prêt à l'emploi pour piloter un [EditText] avec des caractères AYNEHA bruts. */
     fun target(editText: EditText): AynehaTextTarget = EditTextTarget(editText)
