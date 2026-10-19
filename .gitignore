@@ -1,34 +1,27 @@
-# Gradle files
-.gradle/
+# Fichiers de compilation
 build/
-
-# Local configuration file (sdk path, etc)
-local.properties
-
-# Log/OS Files
-*.log
-
-# Android Studio generated files and folders
+*/build/
+.gradle/
 captures/
 .externalNativeBuild/
 .cxx/
-*.aab
+
+# Réglages personnels d'Android Studio
+.idea/
+*.iml
+local.properties
+
+# Fichiers du système
+.DS_Store
+Thumbs.db
+
+# Applications compilées (elles se téléchargent sur ayneha.org)
 *.apk
+*.aab
 output-metadata.json
 
-# IntelliJ
-*.iml
-.idea/
-misc.xml
-deploymentTargetDropDown.xml
-render.experimental.xml
-
-# Keystore files
+# Clés de signature et mots de passe (ne JAMAIS publier)
 *.jks
 *.keystore
-
-# Google Services (e.g. APIs or Firebase)
-google-services.json
-
-# Android Profiling
-*.hprof
+keystore.properties
+key.properties
